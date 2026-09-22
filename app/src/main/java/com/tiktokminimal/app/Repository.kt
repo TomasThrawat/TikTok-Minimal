@@ -74,7 +74,7 @@ class TikTokRepository(private val context: Context) {
                 filter { ilike("caption", "%" + q.replace("%", "") + "%") }
                 order("created_at", Order.DESCENDING)
                 limit(20)
-            }.decodeList()
+            }.decodeList<FeedVideo>()
         }
 
         return SearchResult(profiles, videos)
