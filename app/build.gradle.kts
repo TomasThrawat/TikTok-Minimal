@@ -15,10 +15,14 @@ val localProperties = Properties().apply {
 }
 
 fun configValue(name: String): String =
-    localProperties.getProperty(name)
+    (localProperties.getProperty(name)
         ?: providers.gradleProperty(name).orNull
         ?: System.getenv(name)
-        ?: ""
+        ?: "")
+        .trim()
+        .removeSurrounding(""")
+        .removeSurrounding("'")
+        .trim()
 
 android {
     namespace = "com.tiktokminimal.app"
@@ -32,13 +36,9 @@ android {
         versionName = "1.0.0"
 
         val supabaseUrl = configValue("SUPABASE_URL")
-            .replace("\\", "\\\\")
-            .replace(""", "\"")
         val supabasePublishableKey = configValue("SUPABASE_PUBLISHABLE_KEY")
-            .replace("\\", "\\\\")
-            .replace(""", "\"")
-        buildConfigField("String", "SUPABASE_URL", "\"$supabaseUrl\"")
-        buildConfigField("String", "SUPABASE_PUBLISHABLE_KEY", "\"$supabasePublishableKey\"")
+        buildConfigField("String", "SUPABASE_URL", ""$supabaseUrl"")
+        buildConfigField("String", "SUPABASE_PUBLISHABLE_KEY", ""$supabasePublishableKey"")
     }
 
     buildFeatures {
