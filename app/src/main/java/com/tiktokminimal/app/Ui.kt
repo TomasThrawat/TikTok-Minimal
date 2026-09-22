@@ -2,8 +2,7 @@ package com.tiktokminimal.app
 
 import android.content.Context
 import android.content.Intent
-import android.net.Uri
-import android.net.toUri
+import androidx.core.net.toUri
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
