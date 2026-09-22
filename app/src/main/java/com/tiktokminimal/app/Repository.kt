@@ -10,9 +10,6 @@ import io.github.jan.supabase.auth.providers.Google
 import io.github.jan.supabase.postgrest.from
 import io.github.jan.supabase.postgrest.query.Order
 import io.github.jan.supabase.storage.storage
-import kotlinx.coroutines.coroutineScope
-import kotlinx.coroutines.flow.collect
-import kotlinx.coroutines.launch
 import java.io.File
 import java.util.UUID
 
@@ -34,8 +31,8 @@ class TikTokRepository(private val context: Context) {
             this.email = email.trim()
             this.password = password
             data = kotlinx.serialization.json.buildJsonObject {
-                put("user_name", username.trim())
-                put("name", username.trim())
+                put("user_name", kotlinx.serialization.json.JsonPrimitive(username.trim()))
+                put("name", kotlinx.serialization.json.JsonPrimitive(username.trim()))
             }
         }
     }
@@ -52,7 +49,7 @@ class TikTokRepository(private val context: Context) {
         supabase.from("feed_videos").select {
             order("created_at", Order.DESCENDING)
             order("id", Order.DESCENDING)
-            range(offset, offset + pageSize - 1)
+            range(offset.toLong(), (offset + pageSize - 1).toLong())
         }.decodeList()
 
     suspend fun search(query: String): SearchResult {
@@ -186,24 +183,10 @@ class TikTokRepository(private val context: Context) {
     suspend fun uploadVideo(uri: Uri, path: String, onProgress: (Float) -> Unit) {
         val workingFile = copyUriToCache(uri, "video-" + UUID.randomUUID() + ".upload")
         try {
-            val upload = supabase.storage
-                .from("videos")
-                .resumable
-                .createOrContinueUpload(path, workingFile)
-
-            coroutineScope {
-                val observer = launch {
-                    upload.stateFlow.collect {
-                        onProgress(it.progress.coerceIn(0f, 1f))
-                    }
-                }
-                try {
-                    upload.startOrResumeUploading()
-                    onProgress(1f)
-                } finally {
-                    observer.cancel()
-                }
-            }
+            onProgress(0f)
+            val bytes = workingFile.readBytes()
+            supabase.storage.from("videos").upload(path, bytes)
+            onProgress(1f)
         } finally {
             workingFile.delete()
         }
@@ -237,7 +220,7 @@ class TikTokRepository(private val context: Context) {
         val file = copyUriToCache(uri, "avatar-" + UUID.randomUUID() + "." + ext)
         return try {
             val path = uid + "/avatar." + ext
-            supabase.storage.from("avatars").upload(path, file) {
+            supabase.storage.from("avatars").upload(path, file.readBytes()) {
                 upsert = true
             }
             val url = supabase.storage.from("avatars").publicUrl(path)

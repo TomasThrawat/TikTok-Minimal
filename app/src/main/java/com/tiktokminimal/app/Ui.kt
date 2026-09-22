@@ -761,7 +761,7 @@ private fun CreateScreen(vm: AppViewModel) {
         Button(
             onClick = {
                 val hashtags = hashtagsText
-                    .split(Regex("\s+"))
+                    .split(Regex("\\s+"))
                     .map { it.removePrefix("#").trim().lowercase() }
                     .filter { it.matches(Regex("^[a-z0-9_.-]{1,64}$")) }
                     .distinct()
