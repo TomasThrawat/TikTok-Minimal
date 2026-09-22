@@ -1,4 +1,3 @@
-
 package com.tiktokminimal.app
 
 import android.content.Context
@@ -38,7 +37,10 @@ class TikTokRepository(private val context: Context) {
     }
 
     suspend fun signInWithGoogle() {
-        supabase.auth.signInWith(Google)
+        supabase.auth.signInWith(
+            Google,
+            redirectUrl = "tiktokminimal://auth/callback"
+        )
     }
 
     suspend fun signOut() {

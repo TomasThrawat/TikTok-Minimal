@@ -42,6 +42,13 @@ jobs:
           test -n "$SUPABASE_URL"
           test -n "$SUPABASE_PUBLISHABLE_KEY"
 
+      - name: Verify Supabase Auth API key
+        shell: bash
+        run: |
+          set -euo pipefail
+          curl --fail-with-body --silent --show-error             -H "apikey: $SUPABASE_PUBLISHABLE_KEY"             -H "Authorization: Bearer $SUPABASE_PUBLISHABLE_KEY"             "$SUPABASE_URL/auth/v1/settings"             -o /tmp/supabase-auth-settings.json
+          test -s /tmp/supabase-auth-settings.json
+
       - name: Unit tests
         run: gradle --no-daemon testDebugUnitTest
 
