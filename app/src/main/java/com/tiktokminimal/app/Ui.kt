@@ -59,7 +59,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.platform.LocalLifecycleOwner
+import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.style.TextOverflow
@@ -74,7 +74,7 @@ import androidx.media3.datasource.DefaultHttpDataSource
 import androidx.media3.datasource.cache.CacheDataSource
 import androidx.media3.datasource.cache.LeastRecentlyUsedCacheEvictor
 import androidx.media3.datasource.cache.SimpleCache
-import androidx.media3.database.ExoDatabaseProvider
+import androidx.media3.database.StandaloneDatabaseProvider
 import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.exoplayer.source.DefaultMediaSourceFactory
 import androidx.media3.ui.AspectRatioFrameLayout
@@ -498,7 +498,7 @@ private data class PlayerHolder(
 private fun rememberCachedVideoPlayer(context: android.content.Context): ExoPlayer {
     val holder = remember {
         val cacheDir = File(context.cacheDir, "video-cache")
-        val database = ExoDatabaseProvider(context)
+        val database = StandaloneDatabaseProvider(context)
         val cache = SimpleCache(
             cacheDir,
             LeastRecentlyUsedCacheEvictor(128L * 1024L * 1024L),
