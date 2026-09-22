@@ -4,9 +4,12 @@ package com.tiktokminimal.app
 import android.content.Context
 import android.net.Uri
 import android.provider.OpenableColumns
-import io.github.jan.supabase.auth.providers.Email
+import io.github.jan.supabase.auth.auth
+import io.github.jan.supabase.auth.providers.builtin.Email
 import io.github.jan.supabase.auth.providers.Google
-import io.github.jan.supabase.postgrest.Order
+import io.github.jan.supabase.postgrest.from
+import io.github.jan.supabase.postgrest.query.Order
+import io.github.jan.supabase.storage.storage
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.launch
