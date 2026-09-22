@@ -15,14 +15,10 @@ val localProperties = Properties().apply {
 }
 
 fun configValue(name: String): String =
-    (localProperties.getProperty(name)
+    localProperties.getProperty(name)
         ?: providers.gradleProperty(name).orNull
         ?: System.getenv(name)
-        ?: "")
-        .trim()
-        .removeSurrounding(""")
-        .removeSurrounding("'")
-        .trim()
+        ?: ""
 
 android {
     namespace = "com.tiktokminimal.app"
