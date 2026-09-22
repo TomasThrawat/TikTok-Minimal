@@ -38,6 +38,17 @@ jobs:
       - name: Android lint
         run: gradle --no-daemon lintDebug
 
+      - name: Print lint report
+        if: always()
+        shell: bash
+        run: |
+          report="app/build/intermediates/lint_intermediate_text_report/debug/lintReportDebug/lint-results-debug.txt"
+          if [ -f "$report" ]; then
+            cat "$report"
+          else
+            echo "No lint text report generated."
+          fi
+
       - name: Assemble debug APK
         run: gradle --no-daemon assembleDebug
 
