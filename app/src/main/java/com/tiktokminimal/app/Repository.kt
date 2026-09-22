@@ -68,7 +68,7 @@ class TikTokRepository(private val context: Context) {
                 filter { contains("hashtags", listOf(tag)) }
                 order("created_at", Order.DESCENDING)
                 limit(20)
-            }.decodeList()
+            }.decodeList<FeedVideo>()
         } else {
             supabase.from("feed_videos").select {
                 filter { ilike("caption", "%" + q.replace("%", "") + "%") }
