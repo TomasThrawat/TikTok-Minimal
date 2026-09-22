@@ -37,8 +37,8 @@ android {
         val supabasePublishableKey = configValue("SUPABASE_PUBLISHABLE_KEY")
             .replace("\\", "\\\\")
             .replace(""", "\"")
-        buildConfigField("String", "SUPABASE_URL", ""$supabaseUrl"")
-        buildConfigField("String", "SUPABASE_PUBLISHABLE_KEY", ""$supabasePublishableKey"")
+        buildConfigField("String", "SUPABASE_URL", "\"$supabaseUrl\"")
+        buildConfigField("String", "SUPABASE_PUBLISHABLE_KEY", "\"$supabasePublishableKey\"")
     }
 
     buildFeatures {
