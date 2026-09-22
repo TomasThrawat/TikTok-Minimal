@@ -32,8 +32,15 @@ android {
         versionCode = 1
         versionName = "1.0.0"
 
-        buildConfigField("String", "SUPABASE_URL", """ + configValue("SUPABASE_URL") + """)
-        buildConfigField("String", "SUPABASE_PUBLISHABLE_KEY", """ + configValue("SUPABASE_PUBLISHABLE_KEY") + """)
+        val supabaseUrl = configValue("SUPABASE_URL")
+            .replace("\", "\\")
+            .replace(""", "\"")
+        val supabasePublishableKey = configValue("SUPABASE_PUBLISHABLE_KEY")
+            .replace("\", "\\")
+            .replace(""", "\"")
+        buildConfigField("String", "SUPABASE_URL", ""$supabaseUrl"")
+        buildConfigField("String", "SUPABASE_PUBLISHABLE_KEY", ""$supabasePublishableKey"")
+
     }
 
     buildFeatures {
