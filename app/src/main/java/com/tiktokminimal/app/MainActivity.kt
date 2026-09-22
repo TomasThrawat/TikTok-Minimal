@@ -2,11 +2,10 @@
 package com.tiktokminimal.app
 
 import android.content.Intent
-import android.graphics.Color as AndroidColor
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
-import androidx.core.view.WindowCompat
+import androidx.activity.enableEdgeToEdge
 import androidx.lifecycle.ViewModelProvider
 
 class MainActivity : ComponentActivity() {
@@ -16,9 +15,7 @@ class MainActivity : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        WindowCompat.setDecorFitsSystemWindows(window, false)
-        window.statusBarColor = AndroidColor.BLACK
-        window.navigationBarColor = AndroidColor.BLACK
+        enableEdgeToEdge()
         viewModel.handleDeepLink(intent)
 
         setContent {
