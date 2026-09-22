@@ -1,4 +1,3 @@
-
 import java.util.Properties
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 
