@@ -20,9 +20,9 @@ fun configValue(name: String): String =
         ?: System.getenv(name)
         ?: "")
         .trim()
-        .removeSurrounding(""")
-        .removeSurrounding("'")
         .trim()
+
+
 
 android {
     namespace = "com.tiktokminimal.app"
@@ -37,8 +37,8 @@ android {
 
         val supabaseUrl = configValue("SUPABASE_URL")
         val supabasePublishableKey = configValue("SUPABASE_PUBLISHABLE_KEY")
-        buildConfigField("String", "SUPABASE_URL", ""$supabaseUrl"")
-        buildConfigField("String", "SUPABASE_PUBLISHABLE_KEY", ""$supabasePublishableKey"")
+        buildConfigField("String", "SUPABASE_URL", "\"$supabaseUrl\"")
+        buildConfigField("String", "SUPABASE_PUBLISHABLE_KEY", "\"$supabasePublishableKey\"")
     }
 
     buildFeatures {
