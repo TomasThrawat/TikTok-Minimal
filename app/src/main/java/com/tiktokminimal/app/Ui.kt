@@ -1,10 +1,10 @@
 package com.tiktokminimal.app
 
+import android.content.Context
 import android.content.Intent
 import android.net.Uri
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -25,8 +25,6 @@ import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.pager.VerticalPager
-import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.AlertDialog
@@ -52,7 +50,6 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
-import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -69,11 +66,6 @@ import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.media3.common.MediaItem
 import androidx.media3.common.Player
-import androidx.media3.datasource.DefaultHttpDataSource
-import androidx.media3.datasource.cache.CacheDataSource
-import androidx.media3.datasource.cache.LeastRecentlyUsedCacheEvictor
-import androidx.media3.datasource.cache.SimpleCache
-import androidx.media3.database.StandaloneDatabaseProvider
 import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.exoplayer.source.DefaultMediaSourceFactory
 import androidx.media3.ui.AspectRatioFrameLayout
@@ -206,7 +198,7 @@ private fun MainShell(vm: AppViewModel) {
     ) { padding ->
         Box(Modifier.fillMaxSize().padding(padding)) {
             when (tab) {
-                0 -> HomeScreen(vm)
+                0 -> HomeScreen()
                 1 -> DiscoverScreen(vm)
                 2 -> CreateScreen(vm)
                 3 -> InboxScreen(vm)
@@ -255,219 +247,69 @@ private fun BottomNav(selected: Int, onSelected: (Int) -> Unit) {
     }
 }
 
-@OptIn(ExperimentalFoundationApi::class)
 @Composable
-private fun HomeScreen(vm: AppViewModel) {
-    val feed by vm.feed.collectAsStateWithLifecycle()
-    val liked by vm.liked.collectAsStateWithLifecycle()
-    val following by vm.following.collectAsStateWithLifecycle()
-    val loadingMore by vm.loadingMore.collectAsStateWithLifecycle()
-    val loading by vm.ui.collectAsStateWithLifecycle()
-    val pagerState = rememberPagerState(pageCount = { feed.size })
+private fun HomeScreen() {
     val context = LocalContext.current
-    val lifecycleOwner = LocalLifecycleOwner.current
+    var unavailable by rememberSaveable { mutableStateOf(false) }
 
-    var commentsVideo by remember { mutableStateOf<String?>(null) }
-    var isPlaying by rememberSaveable { mutableStateOf(true) }
-    val player = rememberCachedVideoPlayer(context)
-
-    LaunchedEffect(pagerState) {
-        snapshotFlow { pagerState.currentPage }.collect { index ->
-            feed.getOrNull(index)?.let { vm.checkFollowing(it.userId) }
-            if (index >= feed.lastIndex - 2) vm.loadMoreFeed()
-        }
+    LaunchedEffect(Unit) {
+        unavailable = !openTikTokForYou(context)
     }
 
-    LaunchedEffect(feed, pagerState.currentPage) {
-        val index = pagerState.currentPage
-        if (index !in feed.indices) return@LaunchedEffect
-
-        val items = buildList {
-            add(MediaItem.fromUri(feed[index].storagePath.toPlaybackUrl()))
-            feed.getOrNull(index + 1)?.let {
-                add(MediaItem.fromUri(it.storagePath.toPlaybackUrl()))
-            }
-        }
-
-        player.setMediaItems(items)
-        player.seekToDefaultPosition(0)
-        player.prepare()
-        player.playWhenReady = true
-        isPlaying = true
-    }
-
-    DisposableEffect(lifecycleOwner, player) {
-        val observer = LifecycleEventObserver { _, event ->
-            when (event) {
-                Lifecycle.Event.ON_STOP -> player.pause()
-                Lifecycle.Event.ON_START -> if (feed.isNotEmpty()) player.play()
-                else -> Unit
-            }
-        }
-        lifecycleOwner.lifecycle.addObserver(observer)
-        onDispose { lifecycleOwner.lifecycle.removeObserver(observer) }
-    }
-
-    Box(Modifier.fillMaxSize().background(PureBlack)) {
-        if (feed.isEmpty()) {
-            EmptyFeed(loading.loading, vm::refreshFeed)
-        } else {
-            AndroidPlayerView(player, Modifier.fillMaxSize())
-
-            VerticalPager(
-                state = pagerState,
-                modifier = Modifier.fillMaxSize(),
-                beyondViewportPageCount = 1
-            ) { page ->
-                val item = feed[page]
-                FeedOverlay(
-                    item = item,
-                    liked = item.id in liked,
-                    following = item.userId in following,
-                    isPlaying = isPlaying,
-                    onToggleLike = { vm.toggleLike(item.id) },
-                    onComments = {
-                        commentsVideo = item.id
-                        vm.openComments(item.id)
-                    },
-                    onShare = {
-                        vm.recordShare(item.id)
-                        val send = Intent(Intent.ACTION_SEND).apply {
-                            type = "text/plain"
-                            putExtra(Intent.EXTRA_TEXT, item.storagePath.toPlaybackUrl())
-                        }
-                        context.startActivity(Intent.createChooser(send, "Share video"))
-                    },
-                    onFollow = { vm.toggleFollow(item.userId) },
-                    onTogglePlay = {
-                        if (isPlaying) player.pause() else player.play()
-                        isPlaying = !isPlaying
-                    }
-                )
-            }
-        }
-
-        if (loadingMore) {
-            CircularProgressIndicator(
-                modifier = Modifier.align(Alignment.TopCenter).padding(top = 12.dp),
-                color = PrimaryWhite
-            )
-        }
-    }
-
-    commentsVideo?.let { videoId ->
-        CommentsSheet(vm, videoId) { commentsVideo = null }
-    }
-}
-
-@Composable
-private fun EmptyFeed(loading: Boolean, onRefresh: () -> Unit) {
     Column(
-        Modifier.fillMaxSize(),
+        Modifier
+            .fillMaxSize()
+            .background(PureBlack)
+            .padding(28.dp),
         verticalArrangement = Arrangement.Center,
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        Text("No videos yet", color = PrimaryWhite, fontWeight = FontWeight.Bold)
-        Spacer(Modifier.height(8.dp))
-        Text("Upload the first real video from Create.", color = MutedWhite)
-        Spacer(Modifier.height(16.dp))
-        Button(onClick = onRefresh, enabled = !loading) {
-            Text("Refresh")
-        }
-    }
-}
-
-@Composable
-private fun FeedOverlay(
-    item: FeedVideo,
-    liked: Boolean,
-    following: Boolean,
-    isPlaying: Boolean,
-    onToggleLike: () -> Unit,
-    onComments: () -> Unit,
-    onShare: () -> Unit,
-    onFollow: () -> Unit,
-    onTogglePlay: () -> Unit
-) {
-    Box(Modifier.fillMaxSize()) {
-        Column(
-            Modifier
-                .align(Alignment.BottomStart)
-                .padding(start = 16.dp, end = 86.dp, bottom = 22.dp)
-        ) {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                ProfileAvatar(item.avatarUrl, 36.dp)
-                Spacer(Modifier.width(8.dp))
-                Text("@" + item.username, color = PrimaryWhite, fontWeight = FontWeight.Bold)
-                Spacer(Modifier.width(8.dp))
-                TextButton(onClick = onFollow) {
-                    Text(
-                        if (following) "Following" else "Follow",
-                        color = PrimaryWhite
-                    )
-                }
-            }
-
-            Spacer(Modifier.height(7.dp))
-
-            if (item.caption.isNotBlank()) {
-                Text(
-                    item.caption,
-                    color = PrimaryWhite,
-                    maxLines = 3,
-                    overflow = TextOverflow.Ellipsis
-                )
-                Spacer(Modifier.height(5.dp))
-            }
-
-            if (item.hashtags.isNotEmpty()) {
-                Text(
-                    item.hashtags.joinToString(" ") { "#" + it },
-                    color = PrimaryWhite,
-                    maxLines = 2,
-                    overflow = TextOverflow.Ellipsis
-                )
-            }
+        Text("TikTok For You", color = PrimaryWhite, fontWeight = FontWeight.Bold)
+        Spacer(Modifier.height(10.dp))
+        Text(
+            "فتح الـFor You الحقيقي من تطبيق TikTok الرسمي.",
+            color = MutedWhite
+        )
+        Spacer(Modifier.height(20.dp))
+        Button(onClick = { unavailable = !openTikTokForYou(context) }) {
+            Text("Open TikTok For You")
         }
 
-        Column(
-            Modifier
-                .align(Alignment.BottomEnd)
-                .padding(end = 10.dp, bottom = 22.dp),
-            horizontalAlignment = Alignment.CenterHorizontally
-        ) {
-            FeedAction("♡", item.likeCount.toString(), liked, onToggleLike)
-            FeedAction("◌", item.commentCount.toString(), false, onComments)
-            FeedAction("↗", item.shareCount.toString(), false, onShare)
-
-            TextButton(onClick = onTogglePlay) {
-                Text(
-                    if (isPlaying) "Pause" else "Play",
-                    color = PrimaryWhite
-                )
-            }
-        }
-    }
-}
-
-@Composable
-private fun FeedAction(
-    icon: String,
-    count: String,
-    active: Boolean,
-    onClick: () -> Unit
-) {
-    IconButton(onClick = onClick) {
-        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+        if (unavailable) {
+            Spacer(Modifier.height(12.dp))
             Text(
-                icon,
-                color = if (active) PrimaryWhite else MutedWhite,
-                fontWeight = FontWeight.Bold
+                "تطبيق TikTok الرسمي غير مثبت على الجهاز.",
+                color = MutedWhite
             )
-            Text(count, color = PrimaryWhite)
         }
     }
-    Spacer(Modifier.height(8.dp))
+}
+
+private fun openTikTokForYou(context: Context): Boolean {
+    val packageName = "com.zhiliaoapp.musically"
+
+    return try {
+        val forYouIntent = Intent(
+            Intent.ACTION_VIEW,
+            Uri.parse("https://www.tiktok.com/foryou")
+        ).apply {
+            setPackage(packageName)
+        }
+
+        context.startActivity(forYouIntent)
+        true
+    } catch (_: Exception) {
+        try {
+            val launchIntent = context.packageManager
+                .getLaunchIntentForPackage(packageName)
+                ?: return false
+
+            context.startActivity(launchIntent)
+            true
+        } catch (_: Exception) {
+            false
+        }
+    }
 }
 
 @Composable
@@ -486,47 +328,6 @@ private fun AndroidPlayerView(player: ExoPlayer, modifier: Modifier) {
         },
         update = { it.player = player }
     )
-}
-
-private data class PlayerHolder(
-    val player: ExoPlayer,
-    val cache: SimpleCache
-)
-
-@Composable
-private fun rememberCachedVideoPlayer(context: android.content.Context): ExoPlayer {
-    val holder = remember {
-        val cacheDir = File(context.cacheDir, "video-cache")
-        val database = StandaloneDatabaseProvider(context)
-        val cache = SimpleCache(
-            cacheDir,
-            LeastRecentlyUsedCacheEvictor(128L * 1024L * 1024L),
-            database
-        )
-        val http = DefaultHttpDataSource.Factory()
-            .setAllowCrossProtocolRedirects(true)
-            .setUserAgent("TikTokMinimal/1.0")
-
-        val sourceFactory = CacheDataSource.Factory()
-            .setCache(cache)
-            .setUpstreamDataSourceFactory(http)
-            .setFlags(CacheDataSource.FLAG_IGNORE_CACHE_ON_ERROR)
-
-        val player = ExoPlayer.Builder(context)
-            .setMediaSourceFactory(DefaultMediaSourceFactory(sourceFactory))
-            .build()
-
-        PlayerHolder(player, cache)
-    }
-
-    DisposableEffect(holder.player) {
-        onDispose {
-            holder.player.release()
-            holder.cache.release()
-        }
-    }
-
-    return holder.player
 }
 
 @Composable
