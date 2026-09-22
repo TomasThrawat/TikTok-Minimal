@@ -7,8 +7,6 @@ import android.provider.OpenableColumns
 import io.github.jan.supabase.auth.providers.Email
 import io.github.jan.supabase.auth.providers.Google
 import io.github.jan.supabase.postgrest.Order
-import io.github.jan.supabase.storage.UploadStatus
-import io.github.jan.supabase.storage.upload
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.launch
@@ -182,11 +180,7 @@ class TikTokRepository(private val context: Context) {
         }
     }
 
-    suspend fun uploadVideo(
-        uri: Uri,
-        path: String,
-        onProgress: (Float) -> Unit
-    ) {
+    suspend fun uploadVideo(uri: Uri, path: String, onProgress: (Float) -> Unit) {
         val workingFile = copyUriToCache(uri, "video-" + UUID.randomUUID() + ".upload")
         try {
             val upload = supabase.storage
@@ -277,9 +271,7 @@ class TikTokRepository(private val context: Context) {
     private fun copyUriToCache(uri: Uri, name: String): File {
         val file = File(context.cacheDir, name)
         context.contentResolver.openInputStream(uri)?.use { input ->
-            file.outputStream().use { output ->
-                input.copyTo(output, 128 * 1024)
-            }
+            file.outputStream().use { output -> input.copyTo(output, 128 * 1024) }
         } ?: error("Could not open the selected file.")
         return file
     }
