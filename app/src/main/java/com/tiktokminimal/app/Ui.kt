@@ -3,6 +3,7 @@ package com.tiktokminimal.app
 import android.content.Context
 import android.content.Intent
 import android.net.Uri
+import android.net.toUri
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
@@ -291,7 +292,7 @@ private fun openTikTokForYou(context: Context): Boolean {
     return try {
         val forYouIntent = Intent(
             Intent.ACTION_VIEW,
-            Uri.parse("https://www.tiktok.com/foryou")
+            "https://www.tiktok.com/foryou".toUri()
         ).apply {
             setPackage(packageName)
         }
