@@ -33,14 +33,13 @@ android {
         versionName = "1.0.0"
 
         val supabaseUrl = configValue("SUPABASE_URL")
-            .replace("\", "\\")
-            .replace(""", "\"")
+            .replace("\\", "\\\\")
+            .replace("\"", "\\\"")
         val supabasePublishableKey = configValue("SUPABASE_PUBLISHABLE_KEY")
-            .replace("\", "\\")
-            .replace(""", "\"")
-        buildConfigField("String", "SUPABASE_URL", ""$supabaseUrl"")
-        buildConfigField("String", "SUPABASE_PUBLISHABLE_KEY", ""$supabasePublishableKey"")
-
+            .replace("\\", "\\\\")
+            .replace("\"", "\\\"")
+        buildConfigField("String", "SUPABASE_URL", "\"$supabaseUrl\"")
+        buildConfigField("String", "SUPABASE_PUBLISHABLE_KEY", "\"$supabasePublishableKey\"")
     }
 
     buildFeatures {
