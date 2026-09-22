@@ -1,4 +1,3 @@
-
 import java.util.Properties
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 
@@ -86,7 +85,7 @@ dependencies {
     implementation("io.ktor:ktor-client-android:3.6.0")
 
     implementation("io.coil-kt.coil3:coil-compose:3.6.3")
-    implementation("io.coil-kt.coil-network-okhttp:3.6.3")
+    implementation("io.coil-kt.coil3:coil-network-okhttp:3.6.3")
 
     debugImplementation("androidx.compose.ui:ui-tooling")
 }
